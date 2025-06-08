@@ -6,7 +6,6 @@
 <title>Registro de Mantenimiento de unidades</title>
 <link href="https://fonts.googleapis.com/css2?family=Century+Gothic&display=swap" rel="stylesheet" />
 <style>
-  /* Reset básico */
   * {
     box-sizing: border-box;
   }
@@ -60,8 +59,9 @@
 
   input[type="text"],
   input[type="tel"],
-  input[readonly],
-  textarea {
+  select,
+  textarea,
+  input[type="file"] {
     width: 100%;
     padding: 8px 10px;
     border-radius: 6px;
@@ -113,6 +113,26 @@
     color: #fee2e2;
     border: 1px solid #f87171;
   }
+
+  /* Contenedor para la previsualización de imagen */
+  #preview-container {
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  #preview-container img {
+    max-width: 100px;
+    max-height: 70px;
+    object-fit: contain;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  #preview-text {
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
@@ -124,26 +144,67 @@
     <label for="fecha">Fecha</label>
     <input type="text" id="fecha" name="fecha" readonly />
 
-    <label for="nombre">Nombre</label>
+    <label for="nombre">Nombre del Conductor</label>
     <input type="text" id="nombre" name="nombre" placeholder="" required />
 
-    <label for="numtrabajador">Número de trabajador</label>
+    <label for="numtrabajador">Número del Económico</label>
     <input type="text" id="numtrabajador" name="numtrabajador" placeholder="" required />
 
-    <label for="ruta">Ruta</label>
-    <input type="text" id="ruta" name="ruta" placeholder="Ruta asignada" required />
+    <label for="Tarje">Tarjeta de Circulación</label>
+    <select id="Tarje" name="Tarje" required>
+      <option value="SI">SI</option>
+      <option value="NO">NO</option>
+    </select>
 
-    <label for="detalles">Detalles </label>
+    <label for="poli">Póliza</label>
+    <select id="poli" name="poli" required>
+      <option value="SI">SI</option>
+      <option value="NO">NO</option>
+    </select>
+
+    <label for="kilometr">Kilometraje</label>
+    <input type="text" id="kilometr" name="kilometr" placeholder="" required />
+	
+    <label for="Lice">Licencia de Conducir Vigente</label>
+    <input type="text" id="Lice" name="Lice" placeholder="" required />
+
+    <label for="ruta">Ruta</label>
+    <select id="ruta" name="ruta" required>
+      <option value="" disabled selected>Agencia:</option>
+      <option value="Pachuca">Pachuca</option>
+      <option value="Tulancingo">Tulancingo</option>
+      <option value="Huichapan">Huichapan</option>
+      <option value="Ixmiquilpan">Ixmiquilpan</option>
+      <option value="San Agustin">San Agustin</option>
+      <option value="Tula">Tula</option>
+      <option value="Zimapan">Zimapan</option>
+      <option value="Huejutla">Huejutla</option>
+      <option value="Molango">Molango</option>
+      <option value="San Bartolo">San Bartolo</option>
+      <option value="Huayacocotla">Huayacocotla</option>
+      <option value="Tepeji del Rio">Tepeji del Rio</option>
+      <option value="Otra">Otra</option>
+    </select>
+
+    <label for="detalles">Detalles</label>
     <textarea id="detalles" name="detalles" placeholder=""></textarea>
 
     <label for="telefono">Teléfono</label>
     <input type="tel" id="telefono" name="telefono" placeholder="" required />
 
+    <label for="imagen">Placas (Delantera y Trasera)</label>
+    <input type="file" id="imagen" name="imagen" accept="image/*" />
+
+    <!-- Contenedor para preview -->
+    <div id="preview-container" style="display:none;">
+      <img id="preview-img" alt="Previsualización de imagen" />
+      <div id="preview-text">Placas (Delantera y Trasera)</div>
+    </div>
+
     <button type="submit">Generar PDF</button>
     <div id="mensajeRespuesta" class="mensaje"></div>
   </form>
 </div>
-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
@@ -151,7 +212,11 @@
   const form = document.getElementById('formulario');
   const mensaje = document.getElementById('mensajeRespuesta');
   const fechaInput = document.getElementById('fecha');
+  const imagenInput = document.getElementById('imagen');
+  const previewContainer = document.getElementById('preview-container');
+  const previewImg = document.getElementById('preview-img');
 
+  // Set fecha actual
   const hoy = new Date();
   const fechaFormateada = hoy.toLocaleDateString('es-MX', {
     day: '2-digit',
@@ -160,6 +225,22 @@
   });
   fechaInput.value = fechaFormateada;
 
+  // Mostrar preview de imagen cuando se seleccione un archivo
+  imagenInput.addEventListener('change', () => {
+    const file = imagenInput.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImg.src = e.target.result;
+        previewContainer.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      previewContainer.style.display = 'none';
+      previewImg.src = '';
+    }
+  });
+
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     mensaje.style.display = 'none';
@@ -167,74 +248,107 @@
     const fecha = fechaInput.value;
     const nombre = form.nombre.value.trim();
     const num = form.numtrabajador.value.trim();
-    const ruta = form.ruta.value.trim();
+    const tarje = form.Tarje.value;
+    const poli = form.poli.value;
+    const kilometr = form.kilometr.value.trim();
+    const Lice = form.Lice.value.trim();
+    const ruta = form.ruta.value;
     const detalles = form.detalles.value.trim();
     const tel = form.telefono.value.trim();
+    const imagenFile = form.imagen.files[0];
 
-    if (!nombre || !num || !ruta || !tel) {
-      mostrarMensaje('Por favor, complete todos los campos obligatorios.', 'error');
+    if (!nombre || !num || !ruta || !tel || !kilometr) {
+      mostrarMensaje('Complete todos los campos obligatorios.', 'error');
       return;
     }
 
     if (!/^\d{7,}$/.test(tel)) {
-      mostrarMensaje('El número telefónico debe conten al menos 7 dígitos.', 'error');
+      mostrarMensaje('El número telefónico debe contener al menos 7 dígitos.', 'error');
       return;
     }
 
-    const doc = new jsPDF();
-    const ancho = 190;
-    let y = 20;
+    function crearPDF(base64img) {
+      const doc = new jsPDF();
+      const ancho = 190;
+      let y = 20;
 
-   
-    doc.setFillColor(25, 42, 65);
-    doc.rect(0, 0, 210, 30, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('times', 'bold');
-    doc.setFontSize(16);
-    doc.text('REGISTRO DE MANTENIMIENTO DE UNIDADES', 105, 18, { align: 'center' });
+      doc.setFillColor(25, 42, 65);
+      doc.rect(0, 0, 210, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('times', 'bold');
+      doc.setFontSize(16);
+      doc.text('REPORTE DE MANTENIMIENTO DE UNIDADES', 105, 18, { align: 'center' });
 
-    y = 40;
-    doc.setTextColor(33, 33, 33);
-    doc.setFont('times', 'normal');
-    doc.setFontSize(12);
+      y = 40;
+      doc.setTextColor(33, 33, 33);
+      doc.setFont('times', 'normal');
+      doc.setFontSize(12);
 
-    const campos = [
-      { label: "Fecha", value: fecha },
-      { label: "Nombre completo", value: nombre },
-      { label: "Números de trabajador", value: num },
-      { label: "Ruta asignada", value: ruta },
-      { label: "Teléfono", value: tel }
-    ];
+      const campos = [
+        { label: "Fecha", value: fecha },
+        { label: "Nombre del Conductor", value: nombre },
+        { label: "Número del Económico", value: num },
+        { label: "Tarjeta de Circulación", value: tarje },
+        { label: "Póliza", value: poli },
+        { label: "Kilometraje", value: kilometr },
+        { label: "Licencia de Conducir Vigente", value: Lice },
+        { label: "Ruta asignada", value: ruta },
+        { label: "Teléfono", value: tel }
+      ];
 
-    campos.forEach(({ label, value }) => {
+      campos.forEach(({ label, value }) => {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(15, y, ancho, 10, 'F');
+        doc.setTextColor(0, 0, 0);
+        doc.text(`${label}: ${value}`, 20, y + 7);
+        y += 12;
+      });
+
+      if (base64img) {
+        try {
+          const imgWidth = 100;
+          const imgHeight = 60;
+          doc.addImage(base64img, 'JPEG', 55, y, imgWidth, imgHeight);
+          y += imgHeight + 10;
+        } catch (e) {
+          console.warn("Error al agregar imagen al PDF:", e);
+        }
+      }
+
       doc.setFillColor(245, 245, 245);
       doc.rect(15, y, ancho, 10, 'F');
-      doc.setTextColor(0, 0, 0);
-      doc.text(`${label}: ${value}`, 20, y + 7);
+      doc.text("Detalles:", 20, y + 7);
       y += 12;
-    });
 
-    doc.setFillColor(245, 245, 245);
-    doc.rect(15, y, ancho, 10, 'F');
-    doc.text("Detalles:", 20, y + 7);
-    y += 12;
+      const detallesLineas = doc.splitTextToSize(detalles || 'N/A', 180);
+      detallesLineas.forEach(linea => {
+        doc.text(linea, 20, y);
+        y += 8;
+      });
 
-    const detallesLineas = doc.splitTextToSize(detalles || 'N/A', 180);
-    detallesLineas.forEach(linea => {
-      doc.text(linea, 20, y);
-      y += 8;
-    });
+      y += 20;
+      doc.setLineWidth(0.5);
+      doc.line(130, y + 15, 190, y + 15);
+      doc.text('Firma del responsable', 130, y + 22);
 
-   
-    y += 20;
-    doc.setLineWidth(0.5);
-    doc.line(130, y + 15, 190, y + 15);
-    doc.text('Firma del responsable', 130, y + 22);
+      doc.save(`reporte_${nombre.replace(/\s+/g, '_')}.pdf`);
+      mostrarMensaje('PDF generado exitosamente.', 'exito');
+      form.reset();
+      fechaInput.value = fechaFormateada;
+      previewContainer.style.display = 'none'; // Ocultar preview al reiniciar
+      previewImg.src = '';
+    }
 
-    doc.save(`reporte_${nombre.replace(/\s+/g, '_')}.pdf`);
-    mostrarMensaje('PDF generado exitosamente.', 'exito');
-    form.reset();
-    fechaInput.value = fechaFormateada;
+    if (imagenFile) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const base64img = event.target.result;
+        crearPDF(base64img);
+      }
+      reader.readAsDataURL(imagenFile);
+    } else {
+      crearPDF(null);
+    }
   });
 
   function mostrarMensaje(texto, tipo) {
@@ -246,9 +360,6 @@
 
 </body>
 </html>
-
-
-
 
 
 
